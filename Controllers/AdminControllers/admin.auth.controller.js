@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 
 class AdminAuthController {
   checkAuth = async (req, res) => {
+    console.log("checking Admin Auth");
     try {
       return res.status(200).json({ message: "Authorized" });
     } catch (error) {

@@ -1,17 +1,13 @@
+// multerConfig.js
 import multer from "multer";
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "./uploads/"); // Store videos in the 'uploads/videos' directory
-  },
-  filename: (req, file, cb) => {
-    // Generate a unique filename with the current timestamp and original file extension
-    const uniqueName = `${Date.now()}-${file.originalname}`;
-    cb(null, uniqueName);
-  },
-});
+const storage = multer.memoryStorage(); // use memory for Sharp
 
-// Set up the multer middleware
 export const upload = multer({
-  storage: storage,
+  storage,
+  limits: { files: 10 }, // Limit max images to 10
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("Only images are allowed"));
+  },
 });

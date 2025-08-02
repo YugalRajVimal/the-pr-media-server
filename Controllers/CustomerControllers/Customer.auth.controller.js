@@ -1,4 +1,5 @@
 import sendMail from "../../config/nodeMailer.config.js";
+import AdminModel from "../../Schema/admin.schema.js";
 import CustomerModel from "../../Schema/customer.schema.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -172,6 +173,39 @@ class CustomerAuthController {
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Internal Server Error" });
+    }
+  };
+
+  getAllNameCommentAndImagesCombined = async (req, res) => {
+    try {
+      const admin = await AdminModel.find({}, "nameComments imagesPath");
+
+      if (!admin || admin.length === 0) {
+        return res.status(404).json({ message: "No data found" });
+      }
+
+      // Extract all nameComments and images into flat arrays
+      const allComments = admin.flatMap((a) => a.nameComments);
+      const allImages = admin.flatMap((a) => a.imagesPath);
+
+      if (!allComments || allComments.length === 0) {
+        return res.status(404).json({ message: "No name-comments found" });
+      }
+
+      // Shuffle the images randomly
+      const shuffledImages = allImages.sort(() => 0.5 - Math.random());
+
+      // Attach images to comments (discard extra images if any)
+      const combined = allComments.map((commentObj, index) => ({
+        ...commentObj.toObject(),
+        image: index < shuffledImages.length ? shuffledImages[index] : null,
+      }));
+
+      console.log(combined);
+      return res.status(200).json({ data: combined });
+    } catch (error) {
+      console.error("Error while combining data:", error);
+      return res.status(500).json({ message: "Internal Server Error" });
     }
   };
 }

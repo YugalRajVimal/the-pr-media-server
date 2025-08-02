@@ -26,6 +26,21 @@ const adminSchema = new mongoose.Schema({
   verified: {
     type: Boolean,
   },
+  nameComments: [
+    {
+      name: {
+        type: String,
+      },
+      comment: {
+        type: String,
+      },
+    },
+  ],
+  imagesPath: [
+    {
+      type: String,
+    },
+  ],
 });
 
 const AdminModel = mongoose.model("Admin", adminSchema);

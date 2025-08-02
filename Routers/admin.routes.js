@@ -3,6 +3,7 @@ import express from "express";
 import AdminAuthController from "../Controllers/AdminControllers/admin.auth.controller.js";
 import AdminController from "../Controllers/AdminControllers/admin.controller.js";
 import jwtAdminAuth from "../middlewares/Auth/admin.auth.middleware.js";
+import { upload } from "../middlewares/fileUpload.middleware.js";
 
 const adminRouter = express.Router();
 
@@ -10,7 +11,7 @@ const adminAuthController = new AdminAuthController();
 const adminController = new AdminController();
 
 adminRouter.get("/", (req, res) => {
-  res.send("Welcome to Zest Agri Admin APIs");
+  res.send("Welcome to The PR Media Admin APIs");
 });
 
 adminRouter.post("/auth", (req, res) => {
@@ -33,32 +34,34 @@ adminRouter.post("/reset-password", (req, res) => {
   adminAuthController.resetPassword(req, res);
 });
 
-adminRouter.post("/onboard-farmer", jwtAdminAuth, (req, res) => {
-  adminController.onboardFarmer(req, res);
+adminRouter.post("/upload-name-comments", jwtAdminAuth, (req, res) => {
+  adminController.uploadNameComents(req, res);
 });
 
-adminRouter.get("/upcoming-harvests", jwtAdminAuth, (req, res) => {
-  adminController.getAllUpcomingHarvest(req, res);
+adminRouter.get("/get-all-name-comments", jwtAdminAuth, (req, res) => {
+  adminController.getAllNameComments(req, res);
 });
 
-adminRouter.post("/accept-and-add-to-inventory", jwtAdminAuth, (req, res) => {
-  adminController.acceptAndAddToInventory(req, res);
+adminRouter.delete("/delete-all-name-comments", jwtAdminAuth, (req, res) => {
+  adminController.deleteAllNameComments(req, res);
 });
 
-adminRouter.get("/get-main-inventory-details", jwtAdminAuth, (req, res) => {
-  adminController.getMainInventoryDetails(req, res);
-});
-
-adminRouter.post("/process-seeds-to-makhana", jwtAdminAuth, (req, res) => {
-  adminController.processSeedsToMakhana(req, res);
-});
-
-adminRouter.get(
-  "/get-processed-seed-to-makhana-inventory-details",
+// route
+adminRouter.post(
+  "/upload-images",
   jwtAdminAuth,
+  upload.array("images", 10),
   (req, res) => {
-    adminController.getProcessedSeedToMakhanaInventoryDetails(req, res);
+    adminController.uploadImages(req, res);
   }
 );
+
+adminRouter.get("/get-uploaded-images", jwtAdminAuth, (req, res) => {
+  adminController.getUploadedImages(req, res);
+});
+
+adminRouter.delete("/delete-all-images", jwtAdminAuth, (req, res) => {
+  adminController.deleteAllImages(req, res);
+});
 
 export default adminRouter;

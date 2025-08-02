@@ -17,4 +17,9 @@ customerRouter.post("/auth", jwtAuth, customerAuthController.checkAuth);
 customerRouter.post("/reset-password", customerAuthController.resetPassword);
 customerRouter.post("/verify-account", customerAuthController.verifyAccount);
 
+customerRouter.get(
+  "/get-all-name-comment-and-images-combined",
+  customerAuthController.getAllNameCommentAndImagesCombined
+);
+
 export default customerRouter;
