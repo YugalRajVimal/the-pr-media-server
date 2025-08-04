@@ -14,7 +14,7 @@ const customerAuthController = new CustomerAuthController();
 
 // customerRouter.post("/signin", customerAuthController.signin);
 // customerRouter.post("/signup", customerAuthController.signup);
-customerRouter.post("/auth", jwtCookieAuth, customerAuthController.checkAuth);
+customerRouter.post("/auth", jwtAuth, customerAuthController.checkAuth);
 // customerRouter.post("/reset-password", customerAuthController.resetPassword);
 // customerRouter.post("/verify-account", customerAuthController.verifyAccount);
 
