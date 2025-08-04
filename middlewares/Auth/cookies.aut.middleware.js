@@ -20,6 +20,8 @@ const jwtCookieAuth = (req, res, next) => {
       role: payload.role,
     };
 
+    console.log("User authenticated successfully");
+
     next();
   } catch (error) {
     console.log(error);

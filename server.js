@@ -73,7 +73,6 @@ app.get(
         httpOnly: true,
         secure: true, // true in production (HTTPS)
         // secure: process.env.NODE_ENV==production, // true in production (HTTPS)
-
         // sameSite: "Lax", // Or 'None' if cross-site
         sameSite: "None",
         maxAge: 24 * 60 * 60 * 1000, // 1 day
