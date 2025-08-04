@@ -83,7 +83,7 @@ app.get(
       });
 
       // Redirect to frontend route (e.g., dashboard)
-      res.redirect(`${process.env.FRONTEND_URL}/dashboard`); // change if needed
+      res.redirect(`${process.env.FRONTEND_URL}/`); // change if needed
     } catch (err) {
       console.error("Google OAuth callback error:", err);
       res.redirect(`${process.env.FRONTEND_URL}?error=oauth-failed`);
