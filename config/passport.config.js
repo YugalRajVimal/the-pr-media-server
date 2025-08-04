@@ -4,7 +4,6 @@ import GoogleStrategy from "passport-google-oauth20";
 import jwt from "jsonwebtoken";
 import CustomerModel from "../Schema/customer.schema.js";
 
-
 console.log("Google Client ID:", process.env.GOOGLE_CLIENT_ID);
 console.log("Google Secret:", process.env.GOOGLE_CLIENT_SECRET);
 
@@ -13,7 +12,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://localhost:8080/auth/google/callback",
+      callbackURL: `${process.env.FRONTEND_URL}/auth/google/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
