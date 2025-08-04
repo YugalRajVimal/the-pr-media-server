@@ -16,6 +16,8 @@ const port = process.env.PORT || 8080;
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 app.use(
   session({
     secret: "your_secret",
@@ -70,7 +72,10 @@ app.get(
       res.cookie("token", token, {
         httpOnly: true,
         secure: true, // true in production (HTTPS)
-        sameSite: "Lax", // Or 'None' if cross-site
+        // secure: process.env.NODE_ENV==production, // true in production (HTTPS)
+
+        // sameSite: "Lax", // Or 'None' if cross-site
+        sameSite: "None",
         maxAge: 24 * 60 * 60 * 1000, // 1 day
       });
 
@@ -78,7 +83,8 @@ app.get(
       res.cookie("isCustomerAuthenticated", true, {
         httpOnly: true,
         secure: true,
-        sameSite: "Lax",
+        // sameSite: "Lax",
+        sameSite: "None",
         maxAge: 24 * 60 * 60 * 1000,
       });
 
@@ -90,15 +96,6 @@ app.get(
     }
   }
 );
-
-// old Callback URL
-// app.get(
-//   "/auth/google/callback",
-//   passport.authenticate("google", {
-//     successRedirect: "http://localhost:3000/",
-//     failureRedirect: "http://localhost:3000/",
-//   })
-// );
 
 app.get("/", (req, res) => {
   res.send("Welcome to The PR Media Server");
