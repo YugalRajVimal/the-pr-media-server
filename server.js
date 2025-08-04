@@ -69,15 +69,15 @@ app.get(
       // Set HTTP-only JWT token cookie
       res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // true in production (HTTPS)
+        secure: true, // true in production (HTTPS)
         sameSite: "Lax", // Or 'None' if cross-site
         maxAge: 24 * 60 * 60 * 1000, // 1 day
       });
 
       // Optional: Set flag readable by frontend
       res.cookie("isCustomerAuthenticated", true, {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === "production",
+        httpOnly: true,
+        secure: true,
         sameSite: "Lax",
         maxAge: 24 * 60 * 60 * 1000,
       });
