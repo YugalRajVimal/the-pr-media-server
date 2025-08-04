@@ -28,7 +28,11 @@ app.use(
 
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://theprmedia.com"],
+    origin: [
+      "http://localhost:3000",
+      "https://theprmedia.com",
+      "https://www.theprmedia.com",
+    ],
     credentials: true,
   })
 );
