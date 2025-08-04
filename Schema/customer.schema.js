@@ -10,19 +10,6 @@ const customerSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  phoneNo: {
-    type: String,
-    unique: true,
-  },
-  password: {
-    type: String,
-  },
-  otp: {
-    type: String,
-  },
-  otpExpires: {
-    type: Date,
-  },
   verified: {
     type: Boolean,
   },

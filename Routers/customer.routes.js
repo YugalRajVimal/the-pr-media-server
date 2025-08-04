@@ -12,11 +12,11 @@ import jwtCookieAuth from "../middlewares/Auth/cookies.aut.middleware.js";
 
 const customerAuthController = new CustomerAuthController();
 
-customerRouter.post("/signin", customerAuthController.signin);
-customerRouter.post("/signup", customerAuthController.signup);
+// customerRouter.post("/signin", customerAuthController.signin);
+// customerRouter.post("/signup", customerAuthController.signup);
 customerRouter.post("/auth", jwtCookieAuth, customerAuthController.checkAuth);
-customerRouter.post("/reset-password", customerAuthController.resetPassword);
-customerRouter.post("/verify-account", customerAuthController.verifyAccount);
+// customerRouter.post("/reset-password", customerAuthController.resetPassword);
+// customerRouter.post("/verify-account", customerAuthController.verifyAccount);
 
 customerRouter.get(
   "/get-all-name-comment-and-images-combined",
