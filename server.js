@@ -26,7 +26,7 @@ app.use(
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000", "https://theprmedia.com"],
     credentials: true,
   })
 );
@@ -48,7 +48,7 @@ app.get(
   "/auth/google/callback",
   passport.authenticate("google", {
     session: false,
-    failureRedirect: "http://localhost:3000", // Adjust to your frontend login page
+    failureRedirect: `${process.env.FRONTEND_URL}`, // Adjust to your frontend login page
   }),
   async (req, res) => {
     try {
@@ -83,10 +83,10 @@ app.get(
       });
 
       // Redirect to frontend route (e.g., dashboard)
-      res.redirect("http://localhost:3000/dashboard"); // change if needed
+      res.redirect(`${process.env.FRONTEND_URL}/dashboard`); // change if needed
     } catch (err) {
       console.error("Google OAuth callback error:", err);
-      res.redirect("http://localhost:3000?error=oauth-failed");
+      res.redirect(`${process.env.FRONTEND_URL}?error=oauth-failed`);
     }
   }
 );
