@@ -204,6 +204,26 @@ class CustomerAuthController {
       return res.status(500).json({ message: "Internal Server Error" });
     }
   };
+
+  isUserApproved = async (req, res) => {
+    console.log('hit');
+    try {
+      console.log('req.user.id:', req.user.id);
+      const  userId  = req.user.id;
+      console.log('userId:', userId);
+      const user = await CustomerModel.findById(userId);
+      console.log('user:', user);
+      if (!user) {
+        console.log('User not found');
+        return res.status(404).json({ message: "User not found" });
+      }
+      console.log('User found');
+      return res.status(200).json({ approved: user.approved, name: user.name });
+    } catch (error) {
+      console.error("Error checking user approval:", error);
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  };
 }
 
 export default CustomerAuthController;

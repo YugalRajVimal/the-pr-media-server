@@ -13,6 +13,10 @@ const customerSchema = new mongoose.Schema({
   verified: {
     type: Boolean,
   },
+  approved: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const CustomerModel = mongoose.model("Customer", customerSchema);

@@ -5,6 +5,7 @@ import fs from "fs";
 
 import AdminModel from "../../Schema/admin.schema.js";
 import { deleteCompressedFiles } from "../../middlewares/fileDelete.middleware.js";
+import CustomerModel from "../../Schema/customer.schema.js";
 
 const uploadDir = "./uploads/";
 
@@ -160,6 +161,33 @@ class AdminController {
       });
     } catch (error) {
       console.error("Error deleting images or emptying uploads folder:", error);
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  };
+
+  getAllUserList = async (req, res) => {
+    try {
+      const users = await CustomerModel.find();
+      if (!users || users.length === 0) {
+        return res.status(404).json({ message: "No users found" });
+      }
+      return res.status(200).json({ users });
+    } catch (error) {
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  };
+
+  approveUser = async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const user = await CustomerModel.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      user.approved = true;
+      await user.save();
+      return res.status(200).json({ message: "User approved successfully" });
+    } catch (error) {
       return res.status(500).json({ message: "Internal Server Error" });
     }
   };

@@ -23,4 +23,12 @@ customerRouter.get(
   customerAuthController.getAllNameCommentAndImagesCombined
 );
 
+customerRouter.get(
+  "/is-user-approved",
+  jwtAuth,
+  customerAuthController.isUserApproved
+);
+
+
+
 export default customerRouter;
