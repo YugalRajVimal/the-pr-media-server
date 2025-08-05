@@ -206,21 +206,131 @@ class CustomerAuthController {
   };
 
   isUserApproved = async (req, res) => {
-    console.log('hit');
+    console.log("hit");
     try {
-      console.log('req.user.id:', req.user.id);
-      const  userId  = req.user.id;
-      console.log('userId:', userId);
+      console.log("req.user.id:", req.user.id);
+      const userId = req.user.id;
+      console.log("userId:", userId);
       const user = await CustomerModel.findById(userId);
-      console.log('user:', user);
+      console.log("user:", user);
       if (!user) {
-        console.log('User not found');
+        console.log("User not found");
         return res.status(404).json({ message: "User not found" });
       }
-      console.log('User found');
+      console.log("User found");
       return res.status(200).json({ approved: user.approved, name: user.name });
     } catch (error) {
       console.error("Error checking user approval:", error);
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  };
+
+  getLivePeopleCount = () => {
+    const now = new Date();
+    const hour = Number(
+      new Intl.DateTimeFormat("en-US", {
+        hour: "numeric",
+        hour12: false,
+        timeZone: "Asia/Kolkata",
+      }).format(now)
+    );
+
+    const getRandomInRange = (min, max) =>
+      Math.floor(Math.random() * (max - min + 1)) + min;
+
+    const ranges = {
+      1: [5000, 7000],
+      2: [2000, 3000],
+      3: [500, 1000],
+      4: [500, 1000],
+      5: [500, 1000],
+      6: [1000, 2000],
+      7: [4000, 6000],
+      8: [8000, 12000],
+      9: [30000, 50000],
+      10: [50000, 70000],
+      11: [70000, 90000],
+      12: [90000, 110000],
+      13: [110000, 130000],
+      14: [130000, 150000],
+      15: [150000, 165000],
+      16: [165000, 180000],
+      17: [180000, 200000],
+      18: [200000, 220000],
+      19: [200000, 220000],
+      20: [180000, 200000],
+      21: [70000, 80000],
+      22: [50000, 60000],
+      23: [20000, 10000],
+      0: [10000, 12000],
+    };
+
+    const [min, max] = ranges[hour] || [10000, 12000];
+    return getRandomInRange(min, max);
+  };
+
+  // /routes/liveCount.js or similar
+  // getLivePeopleCount = async (req, res) => {
+  //   console.log("getLivePeopleCount function called");
+  //   const now = new Date();
+  //   console.log("Current date and time:", now);
+  //   const hour = Number(
+  //     new Intl.DateTimeFormat("en-US", {
+  //       hour: "numeric",
+  //       hour12: false,
+  //       timeZone: "Asia/Kolkata",
+  //     }).format(now)
+  //   );
+  //   console.log("Current hour:", hour);
+
+  //   const getRandomInRange = (min, max) =>
+  //     Math.floor(Math.random() * (max - min + 1)) + min;
+
+  //   const ranges = {
+  //     1: [5000, 7000],
+  //     2: [2000, 3000],
+  //     3: [500, 1000],
+  //     4: [500, 1000],
+  //     5: [500, 1000],
+  //     6: [1000, 2000],
+  //     7: [4000, 6000],
+  //     8: [8000, 12000],
+  //     9: [30000, 50000],
+  //     10: [50000, 70000],
+  //     11: [70000, 90000],
+  //     12: [90000, 110000],
+  //     13: [110000, 130000],
+  //     14: [130000, 150000],
+  //     15: [150000, 165000],
+  //     16: [165000, 180000],
+  //     17: [180000, 200000],
+  //     18: [200000, 220000],
+  //     19: [200000, 220000],
+  //     20: [180000, 200000],
+  //     21: [70000, 80000],
+  //     22: [50000, 60000],
+  //     23: [20000, 10000],
+  //     0: [10000, 12000],
+  //   };
+
+  //   const [min, max] = ranges[hour] || [10000, 12000];
+  //   console.log("Range for the current hour:", [min, max]);
+  //   const count = getRandomInRange(min, max);
+  //   console.log("Random count generated:", count);
+
+  //   return res.status(200).json({ livePeopleCount: count });
+  // };
+  getLiveCount = async (req, res) => {
+    try {
+      const adminDoc = await AdminModel.findOne(); // use filter if needed
+
+      if (!adminDoc) {
+        return res.status(404).json({ message: "Admin data not found" });
+      }
+
+      return res.status(200).json({ livePeopleCount: adminDoc.liveCount });
+    } catch (err) {
+      console.error("Failed to fetch live count:", err.message);
       return res.status(500).json({ message: "Internal Server Error" });
     }
   };

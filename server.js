@@ -11,6 +11,8 @@ import passport from "passport";
 import "./config/passport.config.js";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
+import CustomerAuthController from "./Controllers/CustomerControllers/Customer.auth.controller.js";
+import AdminModel from "./Schema/admin.schema.js";
 
 const port = process.env.PORT || 8080;
 
@@ -33,6 +35,8 @@ app.use(
       "https://theprmedia.com",
       "https://www.theprmedia.com",
     ],
+    methods: "GET,POST,PUT,DELETE,OPTIONS",
+    allowedHeaders: "Content-Type, Authorization",
     credentials: true,
   })
 );
@@ -43,6 +47,23 @@ app.use(passport.session());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+const customerControllers = new CustomerAuthController();
+
+setInterval(async () => {
+  const newCount = customerControllers.getLivePeopleCount();
+
+  try {
+    await AdminModel.findOneAndUpdate(
+      {}, // You might need a filter like { role: 'admin' } or `{ _id: YOUR_ADMIN_ID }`
+      { liveCount: newCount },
+      { new: true, upsert: true }
+    );
+    console.log("Live people count updated:", newCount);
+  } catch (error) {
+    console.error("Error updating live count:", error.message);
+  }
+}, 10000);
 
 // old Google auth route
 app.get(

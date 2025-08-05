@@ -29,6 +29,6 @@ customerRouter.get(
   customerAuthController.isUserApproved
 );
 
-
+customerRouter.get("/live-count", customerAuthController.getLiveCount);
 
 export default customerRouter;

@@ -41,6 +41,10 @@ const adminSchema = new mongoose.Schema({
       type: String,
     },
   ],
+  liveCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const AdminModel = mongoose.model("Admin", adminSchema);
