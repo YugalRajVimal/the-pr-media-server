@@ -13,11 +13,15 @@ import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import CustomerAuthController from "./Controllers/CustomerControllers/Customer.auth.controller.js";
 import AdminModel from "./Schema/admin.schema.js";
-import "./WebSocketServer/wsServer.js";
+// import "./WebSocketServer/wsServer.js";
+// wsServer.js
+import { WebSocketServer } from "ws";
+import http from "http";
 
 const port = process.env.PORT || 8080;
 
 const app = express();
+const server = http.createServer(app);
 
 app.set("trust proxy", 1);
 
@@ -60,14 +64,10 @@ setInterval(async () => {
       { liveCount: newCount },
       { new: true, upsert: true }
     );
-
   } catch (error) {
     console.error("Error updating live count:", error.message);
   }
 }, 10000);
-
-
-
 
 // old Google auth route
 app.get(
@@ -139,6 +139,30 @@ const __dirname = path.dirname(__filename);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api", router);
+
+const wss = new WebSocketServer({ server });
+
+wss.on("connection", (ws) => {
+  console.log("Client Connected");
+  //   ws.send(JSON.stringify({ name: "YRV", comment: "Hello world" }));
+
+  ws.on("message", (message) => {
+    // ws.send(`Server got: ${message}`);
+  });
+
+  ws.on("close", () => console.log("Client disconnected"));
+});
+
+// Broadcast helper
+export function broadcast(data) {
+  wss.clients.forEach((client) => {
+    if (client.readyState === client.OPEN) {
+      client.send(JSON.stringify(data));
+    }
+  });
+}
+
+export default wss;
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}/`);
