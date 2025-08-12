@@ -258,7 +258,7 @@ class CustomerAuthController {
 
       // 01:00 AM - 08:00 AM → 1.5 to 2 minutes
       if (hour >= 1 && hour < 8)
-        return Math.floor(Math.random() * 30000) + 90000; // 90s - 120s
+        return Math.floor(Math.random() * 2000) + 2000; // 90s - 120s
 
       // 08:00 AM - 10:00 AM → 8 to 10 seconds
       if (hour >= 8 && hour < 10)

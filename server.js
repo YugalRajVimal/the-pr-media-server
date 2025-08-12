@@ -164,8 +164,8 @@ export function broadcast(data) {
 
 export default wss;
 
-server.listen(port, async () => {
+server.listen(port, () => {
   console.log(`Server running at http://localhost:${port}/`);
   connectUsingMongoose();
-  await customerControllers.startRandomBroadcast();
+  customerControllers.startRandomBroadcast();
 });
