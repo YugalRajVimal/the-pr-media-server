@@ -4,7 +4,7 @@ const jwtAdminAuth = (req, res, next) => {
   // Read the token from the Authorization header
   const token = req.headers["authorization"];
 
-  console.log(req.headers["authorization"]);
+
 
   // If no token is present, return an error
   if (!token) {
@@ -31,7 +31,7 @@ const jwtAdminAuth = (req, res, next) => {
     next();
   } catch (error) {
     // If the token is not valid, return an error
-    console.log(error);
+
     return res.status(401).json({ error: "Unauthorized Access" });
   }
 };

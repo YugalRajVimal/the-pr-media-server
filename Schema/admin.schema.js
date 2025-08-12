@@ -41,6 +41,10 @@ const adminSchema = new mongoose.Schema({
       type: String,
     },
   ],
+  currentNameCommentIndex: {
+    type: Number,
+    default: 0,
+  },
   liveCount: {
     type: Number,
     default: 0,

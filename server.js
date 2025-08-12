@@ -13,6 +13,7 @@ import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import CustomerAuthController from "./Controllers/CustomerControllers/Customer.auth.controller.js";
 import AdminModel from "./Schema/admin.schema.js";
+import "./WebSocketServer/wsServer.js";
 
 const port = process.env.PORT || 8080;
 
@@ -59,11 +60,14 @@ setInterval(async () => {
       { liveCount: newCount },
       { new: true, upsert: true }
     );
-    console.log("Live people count updated:", newCount);
+
   } catch (error) {
     console.error("Error updating live count:", error.message);
   }
 }, 10000);
+
+
+
 
 // old Google auth route
 app.get(
@@ -139,4 +143,5 @@ app.use("/api", router);
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}/`);
   connectUsingMongoose();
+  customerControllers.startRandomBroadcast();
 });

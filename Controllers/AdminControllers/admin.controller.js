@@ -63,15 +63,15 @@ class AdminController {
 
     try {
       const adminId = req.user.id; // assuming JWT provides it
-      // console.log("Checking if files are uploaded...");
+
       if (!req.files || req.files.length === 0) {
-        // console.log("No files uploaded");
+
         return res.status(400).json({ message: "No files uploaded" });
       }
 
-      // console.log("Checking if upload directory exists...");
+
       if (!fs.existsSync(uploadDir)) {
-        // console.log("Upload directory does not exist, creating it...");
+
         fs.mkdirSync(uploadDir);
       }
 
@@ -80,37 +80,35 @@ class AdminController {
         const filename = `${timestamp}-${file.originalname}`;
         const outputPath = path.join(uploadDir, filename);
 
-        // console.log(`Processing file: ${file.originalname}`);
+
         await sharp(file.buffer)
           .resize({ width: 1024 }) // Resize
           .jpeg({ quality: 80 }) // Compress
           .toFile(outputPath);
 
         compressedImagePaths.push(outputPath);
-        // console.log(`File processed and saved: ${outputPath}`);
+
       }
 
-      // console.log("Finding admin by ID...");
+
       const admin = await AdminModel.findById(adminId);
       if (!admin) {
-        // console.log("Admin not found, cleaning up files...");
+
         deleteCompressedFiles(compressedImagePaths);
         return res.status(404).json({ message: "Admin not found" });
       }
 
-      // console.log("Saving images paths to admin document...");
+
       admin.imagesPath.push(...compressedImagePaths);
       await admin.save();
 
-      // console.log("Images uploaded and compressed successfully");
+
       res.status(200).json({
         message: "Images uploaded and compressed successfully",
         paths: compressedImagePaths,
       });
     } catch (error) {
-      // console.error("Upload error:", error);
-      // Cleanup files on error
-      // console.log("Cleaning up files due to error...");
+      
       deleteCompressedFiles(compressedImagePaths);
 
       res.status(500).json({
@@ -155,7 +153,7 @@ class AdminController {
       // Delete files from filesystem
       deleteCompressedFiles(filesToDelete);
 
-      console.log("All images deleted successfully and uploads folder emptied");
+
       return res.status(200).json({
         message: "All images deleted successfully and uploads folder emptied",
       });

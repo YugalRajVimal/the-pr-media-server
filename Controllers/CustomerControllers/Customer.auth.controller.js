@@ -3,10 +3,14 @@ import AdminModel from "../../Schema/admin.schema.js";
 import CustomerModel from "../../Schema/customer.schema.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { broadcast } from "../../WebSocketServer/wsServer.js";
 
 class CustomerAuthController {
+  sendNotification(name, comment) {
+    broadcast({ name, comment });
+  }
+
   checkAuth = async (req, res) => {
-    console.log("token Checked");
     return res.status(200).json({ message: "Authorized" });
   };
 
@@ -197,7 +201,6 @@ class CustomerAuthController {
         image: index < shuffledImages.length ? shuffledImages[index] : null,
       }));
 
-      console.log(combined);
       return res.status(200).json({ data: combined });
     } catch (error) {
       console.error("Error while combining data:", error);
@@ -205,22 +208,150 @@ class CustomerAuthController {
     }
   };
 
-  isUserApproved = async (req, res) => {
-    console.log("hit");
+  sendSingleNameComment = async () => {
     try {
-      console.log("req.user.id:", req.user.id);
+      const admin = await AdminModel.findOne(
+        {},
+        "nameComments currentNameCommentIndex"
+      );
+
+      if (!admin || admin.nameComments.length === 0) {
+        console.warn("No name-comments found in DB");
+        return;
+      }
+
+      let { nameComments, currentNameCommentIndex } = admin;
+
+      if (currentNameCommentIndex >= nameComments.length) {
+        // reshuffle and reset
+        nameComments = nameComments.sort(() => Math.random() - 0.5);
+        currentNameCommentIndex = 0;
+
+        await AdminModel.findByIdAndUpdate(admin.id, {
+          nameComments,
+          currentNameCommentIndex,
+        });
+      }
+
+      const currentComment = nameComments[currentNameCommentIndex];
+
+      // Send via WebSocket
+      broadcast(currentComment);
+
+      // Update index
+      await AdminModel.findByIdAndUpdate(admin.id, {
+        currentNameCommentIndex: currentNameCommentIndex + 1,
+      });
+    } catch (error) {
+      console.error("Error sending comment:", error);
+    }
+  };
+
+  // Random delay loop
+  startRandomBroadcast = () => {
+    const getDelayByTime = () => {
+      const now = new Date().toLocaleString("en-US", {
+        timeZone: "Asia/Kolkata",
+      });
+      const hour = new Date(now).getHours();
+
+      // 01:00 AM - 08:00 AM → 1.5 to 2 minutes
+      if (hour >= 1 && hour < 8)
+        return Math.floor(Math.random() * 30000) + 90000; // 90s - 120s
+
+      // 08:00 AM - 10:00 AM → 8 to 10 seconds
+      if (hour >= 8 && hour < 10)
+        return Math.floor(Math.random() * 2000) + 8000; // 8s - 10s
+
+      // 10:00 AM - 09:00 PM → 2 to 4 seconds
+      if (hour >= 10 && hour < 21)
+        return Math.floor(Math.random() * 2000) + 2000; // 2s - 4s
+
+      // 09:00 PM - 01:00 AM → 15 to 20 seconds
+      return Math.floor(Math.random() * 5000) + 15000; // 15s - 20s
+    };
+
+    const sendNext = async () => {
+      await this.sendSingleNameComment(); // Send message
+      const delay = getDelayByTime(); // Pick delay according to IST time
+
+      setTimeout(sendNext, delay); // Schedule next
+    };
+
+    sendNext();
+  };
+
+  // Function to calculate delay based on time
+  getDelayBasedOnTime = () => {
+    const now = new Date().toLocaleString("en-US", {
+      timeZone: "Asia/Kolkata",
+    });
+    const hour = new Date(now).getHours();
+    // 01:00 AM - 08:00 AM → 1.5 to 2 minutes
+    if (hour >= 1 && hour < 8) return Math.floor(Math.random() * 2000) + 2000;
+    // 08:00 AM - 10:00 AM → 8 to 10 seconds
+    if (hour >= 8 && hour < 10) return Math.floor(Math.random() * 2000) + 8000;
+    // 10:00 AM - 09:00 PM → 2 to 4 seconds
+    if (hour >= 10 && hour < 21) return Math.floor(Math.random() * 2000) + 2000;
+    // 09:00 PM - 01:00 AM → 15 to 20 seconds
+    return Math.floor(Math.random() * 5000) + 15000;
+  };
+
+  sendNameCommentUsingWebSockets = async (req, res) => {
+    try {
+      const admin = await AdminModel.findOne(
+        {},
+        "nameComments currentNameCommentIndex"
+      );
+
+      if (!admin || admin.nameComments.length === 0) {
+        return res.status(404).json({ message: "No name-comments found" });
+      }
+
+      let { nameComments, currentNameCommentIndex } = admin;
+
+      if (currentNameCommentIndex >= nameComments.length) {
+        // reshuffle and reset
+        nameComments = nameComments.sort(() => Math.random() - 0.5);
+        currentNameCommentIndex = 0;
+
+        await AdminModel.findByIdAndUpdate(admin.id, {
+          nameComments,
+          currentNameCommentIndex,
+        });
+      }
+
+      const currentComment = nameComments[currentNameCommentIndex];
+
+      // Send to all connected WebSocket clients
+      broadcast(currentComment);
+
+      // Increment index in DB
+      await AdminModel.findByIdAndUpdate(admin.id, {
+        currentNameCommentIndex: currentNameCommentIndex + 1,
+      });
+
+      res
+        .status(200)
+        .json({ message: "Comment sent successfully", currentComment });
+    } catch (error) {
+      console.error("Error sending name-comment:", error);
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  };
+
+  isUserApproved = async (req, res) => {
+    try {
       const userId = req.user.id;
-      console.log("userId:", userId);
+
       const user = await CustomerModel.findById(userId);
-      console.log("user:", user);
+
       if (!user) {
-        console.log("User not found");
         return res.status(404).json({ message: "User not found" });
       }
-      console.log("User found");
+
       return res.status(200).json({ approved: user.approved, name: user.name });
     } catch (error) {
-      console.error("Error checking user approval:", error);
       return res.status(500).json({ message: "Internal Server Error" });
     }
   };
@@ -269,57 +400,6 @@ class CustomerAuthController {
     return getRandomInRange(min, max);
   };
 
-  // /routes/liveCount.js or similar
-  // getLivePeopleCount = async (req, res) => {
-  //   console.log("getLivePeopleCount function called");
-  //   const now = new Date();
-  //   console.log("Current date and time:", now);
-  //   const hour = Number(
-  //     new Intl.DateTimeFormat("en-US", {
-  //       hour: "numeric",
-  //       hour12: false,
-  //       timeZone: "Asia/Kolkata",
-  //     }).format(now)
-  //   );
-  //   console.log("Current hour:", hour);
-
-  //   const getRandomInRange = (min, max) =>
-  //     Math.floor(Math.random() * (max - min + 1)) + min;
-
-  //   const ranges = {
-  //     1: [5000, 7000],
-  //     2: [2000, 3000],
-  //     3: [500, 1000],
-  //     4: [500, 1000],
-  //     5: [500, 1000],
-  //     6: [1000, 2000],
-  //     7: [4000, 6000],
-  //     8: [8000, 12000],
-  //     9: [30000, 50000],
-  //     10: [50000, 70000],
-  //     11: [70000, 90000],
-  //     12: [90000, 110000],
-  //     13: [110000, 130000],
-  //     14: [130000, 150000],
-  //     15: [150000, 165000],
-  //     16: [165000, 180000],
-  //     17: [180000, 200000],
-  //     18: [200000, 220000],
-  //     19: [200000, 220000],
-  //     20: [180000, 200000],
-  //     21: [70000, 80000],
-  //     22: [50000, 60000],
-  //     23: [20000, 10000],
-  //     0: [10000, 12000],
-  //   };
-
-  //   const [min, max] = ranges[hour] || [10000, 12000];
-  //   console.log("Range for the current hour:", [min, max]);
-  //   const count = getRandomInRange(min, max);
-  //   console.log("Random count generated:", count);
-
-  //   return res.status(200).json({ livePeopleCount: count });
-  // };
   getLiveCount = async (req, res) => {
     try {
       const adminDoc = await AdminModel.findOne(); // use filter if needed

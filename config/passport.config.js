@@ -4,9 +4,6 @@ import GoogleStrategy from "passport-google-oauth20";
 import jwt from "jsonwebtoken";
 import CustomerModel from "../Schema/customer.schema.js";
 
-console.log("Google Client ID:", process.env.GOOGLE_CLIENT_ID);
-console.log("Google Secret:", process.env.GOOGLE_CLIENT_SECRET);
-
 passport.use(
   new GoogleStrategy(
     {
