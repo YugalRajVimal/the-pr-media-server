@@ -3,7 +3,8 @@ import AdminModel from "../../Schema/admin.schema.js";
 import CustomerModel from "../../Schema/customer.schema.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { broadcast } from "../../WebSocketServer/wsServer.js";
+import { broadcast } from "../../server.js";
+
 
 class CustomerAuthController {
   sendNotification(name, comment) {
