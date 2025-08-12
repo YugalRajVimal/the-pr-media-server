@@ -18,7 +18,7 @@ import AdminModel from "./Schema/admin.schema.js";
 import { WebSocketServer } from "ws";
 import http from "http";
 
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 9090;
 
 const app = express();
 const server = http.createServer(app);
