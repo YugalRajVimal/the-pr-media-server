@@ -211,6 +211,7 @@ class CustomerAuthController {
 
   sendSingleNameComment = async () => {
     try {
+      console.log("Starting to send a single name comment");
       const admin = await AdminModel.findOne(
         {},
         "nameComments currentNameCommentIndex"
@@ -224,6 +225,7 @@ class CustomerAuthController {
       let { nameComments, currentNameCommentIndex } = admin;
 
       if (currentNameCommentIndex >= nameComments.length) {
+        console.log("Reshuffling and resetting name comments");
         // reshuffle and reset
         nameComments = nameComments.sort(() => Math.random() - 0.5);
         currentNameCommentIndex = 0;
@@ -236,9 +238,11 @@ class CustomerAuthController {
 
       const currentComment = nameComments[currentNameCommentIndex];
 
+      console.log("Sending current comment via WebSocket:", currentComment);
       // Send via WebSocket
       broadcast(currentComment);
 
+      console.log("Updating index after sending comment");
       // Update index
       await AdminModel.findByIdAndUpdate(admin.id, {
         currentNameCommentIndex: currentNameCommentIndex + 1,
@@ -251,6 +255,7 @@ class CustomerAuthController {
   // Random delay loop
   startRandomBroadcast = () => {
     const getDelayByTime = () => {
+      console.log("Calculating delay based on time");
       const now = new Date().toLocaleString("en-US", {
         timeZone: "Asia/Kolkata",
       });
@@ -273,9 +278,11 @@ class CustomerAuthController {
     };
 
     const sendNext = async () => {
+      console.log("Sending next comment in sequence");
       await this.sendSingleNameComment(); // Send message
       const delay = getDelayByTime(); // Pick delay according to IST time
 
+      console.log("Scheduling next comment after delay:", delay);
       setTimeout(sendNext, delay); // Schedule next
     };
 
