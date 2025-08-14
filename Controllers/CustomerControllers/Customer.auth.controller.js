@@ -208,82 +208,188 @@ class CustomerAuthController {
     }
   };
 
-  sendSingleNameComment = async () => {
+  // sendSingleNameComment = async () => {
+  //   try {
+  //     console.log("Starting to send a single name comment");
+  //     const admin = await AdminModel.findOne(
+  //       {},
+  //       "nameComments currentNameCommentIndex"
+  //     );
+
+  //     if (!admin || admin.nameComments.length === 0) {
+  //       console.warn("No name-comments found in DB");
+  //       return;
+  //     }
+
+  //     let { nameComments, currentNameCommentIndex } = admin;
+
+  //     if (currentNameCommentIndex >= nameComments.length) {
+  //       console.log("Reshuffling and resetting name comments");
+  //       // reshuffle and reset
+  //       nameComments = nameComments.sort(() => Math.random() - 0.5);
+  //       currentNameCommentIndex = 0;
+
+  //       await AdminModel.findByIdAndUpdate(admin.id, {
+  //         nameComments,
+  //         currentNameCommentIndex,
+  //       });
+  //     }
+
+  //     const currentComment = nameComments[currentNameCommentIndex];
+
+  //     console.log("Sending current comment via WebSocket:", currentComment);
+  //     // Send via WebSocket
+  //     broadcast(currentComment);
+
+  //     console.log("Updating index after sending comment");
+  //     // Update index
+  //     await AdminModel.findByIdAndUpdate(admin.id, {
+  //       currentNameCommentIndex: currentNameCommentIndex + 1,
+  //     });
+  //   } catch (error) {
+  //     console.error("Error sending comment:", error);
+  //   }
+  // };
+
+  // // Random delay loop
+  // startRandomBroadcast = () => {
+  //   const getDelayByTime = () => {
+  //     console.log("Calculating delay based on time");
+  //     const now = new Date().toLocaleString("en-US", {
+  //       timeZone: "Asia/Kolkata",
+  //     });
+  //     const hour = new Date(now).getHours();
+
+  //     if (hour >= 1 && hour < 8)
+  //       return Math.floor(Math.random() * 30000) + 90000; // 90s - 120s
+  //     if (hour >= 8 && hour < 10)
+  //       return Math.floor(Math.random() * 2000) + 8000; // 8s - 10s
+  //     if (hour >= 10 && hour < 21)
+  //       return Math.floor(Math.random() * 2000) + 2000; // 2s - 4s
+  //     return Math.floor(Math.random() * 5000) + 15000; // 15s - 20s
+  //   };
+
+  //   const sendNext = () => {
+  //     const delay = getDelayByTime();
+  //     console.log("Next comment scheduled in:", delay);
+
+  //     // Start timer immediately
+  //     setTimeout(sendNext, delay);
+
+  //     // Send the comment in parallel (doesn't delay next schedule)
+  //     this.sendSingleNameComment().catch((err) => console.error(err));
+  //   };
+
+  //   sendNext();
+  // };
+
+  // Function to calculate delay based on time
+  
+  // --- only sends, no DB reads/writes ---
+sendSingleNameComment = async (comment) => {
+  try {
+    console.log("Sending current comment via WebSocket:", comment);
+    broadcast(comment);
+  } catch (error) {
+    console.error("Error sending comment:", error);
+  }
+};
+
+// --- helper: get next comment & advance index in DB (atomic per tick) ---
+getNextCommentAndAdvance = async () => {
+  const admin = await AdminModel.findOne({}, "nameComments currentNameCommentIndex");
+  if (!admin || admin.nameComments.length === 0) {
+    console.warn("No name-comments found in DB");
+    return null;
+  }
+
+  let { nameComments, currentNameCommentIndex } = admin;
+
+  // If we've consumed the batch, reshuffle and start from 0
+  if (currentNameCommentIndex >= nameComments.length) {
+    // Fisher–Yates shuffle (better than sort(() => Math.random() - 0.5))
+    nameComments = [...nameComments];
+    for (let i = nameComments.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [nameComments[i], nameComments[j]] = [nameComments[j], nameComments[i]];
+    }
+
+    const currentComment = nameComments[0];
+
+    // write new order and advance to index 1 in a single write
+    await AdminModel.findByIdAndUpdate(
+      admin.id,
+      { nameComments, currentNameCommentIndex: 1 },
+      { new: false }
+    );
+    return currentComment;
+  }
+
+  // Normal case: use current index, then advance by 1
+  const currentComment = nameComments[currentNameCommentIndex];
+  await AdminModel.findByIdAndUpdate(
+    admin.id,
+    { currentNameCommentIndex: currentNameCommentIndex + 1 },
+    { new: false }
+  );
+
+  return currentComment;
+};
+
+// --- scheduler: owns timing AND the index updates ---
+startRandomBroadcast = () => {
+  const getDelayByTime = () => {
+    // robust hour-in-IST without reparsing strings
+    const hour = Number(
+      new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Asia/Kolkata",
+        hour: "2-digit",
+        hour12: false,
+      }).format(Date.now())
+    );
+
+    if (hour >= 1 && hour < 8)  return Math.floor(Math.random() * 30000) + 90000; // 90–120s
+    if (hour >= 8 && hour < 10) return Math.floor(Math.random() * 2000) + 8000;   // 8–10s
+    if (hour >= 10 && hour < 21) return Math.floor(Math.random() * 2000) + 2000;  // 2–4s
+    return Math.floor(Math.random() * 5000) + 15000;                              // 15–20s
+  };
+
+  // (optional) guard so you don't accidentally start multiple loops
+  if (this._broadcastRunning) {
+    console.log("Broadcast already running");
+    return;
+  }
+  this._broadcastRunning = true;
+
+  const tick = async () => {
+    // schedule NEXT tick first
+    const delay = getDelayByTime();
+    console.log("Next comment scheduled in:", delay);
+    this._broadcastTimer = setTimeout(tick, delay);
+  
     try {
-      console.log("Starting to send a single name comment");
-      const admin = await AdminModel.findOne(
-        {},
-        "nameComments currentNameCommentIndex"
-      );
-
-      if (!admin || admin.nameComments.length === 0) {
-        console.warn("No name-comments found in DB");
-        return;
+      const comment = await getNextCommentAndAdvance(); // update index
+      if (comment) {
+        // send in parallel so it doesn't delay the schedule
+        this.sendSingleNameComment(comment).catch(err =>
+          console.error("Send error:", err)
+        );
       }
-
-      let { nameComments, currentNameCommentIndex } = admin;
-
-      if (currentNameCommentIndex >= nameComments.length) {
-        console.log("Reshuffling and resetting name comments");
-        // reshuffle and reset
-        nameComments = nameComments.sort(() => Math.random() - 0.5);
-        currentNameCommentIndex = 0;
-
-        await AdminModel.findByIdAndUpdate(admin.id, {
-          nameComments,
-          currentNameCommentIndex,
-        });
-      }
-
-      const currentComment = nameComments[currentNameCommentIndex];
-
-      console.log("Sending current comment via WebSocket:", currentComment);
-      // Send via WebSocket
-      broadcast(currentComment);
-
-      console.log("Updating index after sending comment");
-      // Update index
-      await AdminModel.findByIdAndUpdate(admin.id, {
-        currentNameCommentIndex: currentNameCommentIndex + 1,
-      });
-    } catch (error) {
-      console.error("Error sending comment:", error);
+    } catch (err) {
+      console.error("Tick error:", err);
     }
   };
 
-  // Random delay loop
-  startRandomBroadcast = () => {
-    const getDelayByTime = () => {
-      console.log("Calculating delay based on time");
-      const now = new Date().toLocaleString("en-US", {
-        timeZone: "Asia/Kolkata",
-      });
-      const hour = new Date(now).getHours();
+  tick();
+};
 
-      if (hour >= 1 && hour < 8)
-        return Math.floor(Math.random() * 30000) + 90000; // 90s - 120s
-      if (hour >= 8 && hour < 10)
-        return Math.floor(Math.random() * 2000) + 8000; // 8s - 10s
-      if (hour >= 10 && hour < 21)
-        return Math.floor(Math.random() * 2000) + 2000; // 2s - 4s
-      return Math.floor(Math.random() * 5000) + 15000; // 15s - 20s
-    };
+// optional stopper
+stopRandomBroadcast = () => {
+  if (this._broadcastTimer) clearTimeout(this._broadcastTimer);
+  this._broadcastRunning = false;
+};
 
-    const sendNext = () => {
-      const delay = getDelayByTime();
-      console.log("Next comment scheduled in:", delay);
-
-      // Start timer immediately
-      setTimeout(sendNext, delay);
-
-      // Send the comment in parallel (doesn't delay next schedule)
-      this.sendSingleNameComment().catch((err) => console.error(err));
-    };
-
-    sendNext();
-  };
-
-  // Function to calculate delay based on time
+  
   getDelayBasedOnTime = () => {
     const now = new Date().toLocaleString("en-US", {
       timeZone: "Asia/Kolkata",
