@@ -368,7 +368,7 @@ startRandomBroadcast = () => {
     this._broadcastTimer = setTimeout(tick, delay);
   
     try {
-      const comment = await getNextCommentAndAdvance(); // update index
+      const comment = await this.getNextCommentAndAdvance(); // update index
       if (comment) {
         // send in parallel so it doesn't delay the schedule
         this.sendSingleNameComment(comment).catch(err =>
