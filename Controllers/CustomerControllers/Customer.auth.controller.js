@@ -516,7 +516,7 @@ class CustomerAuthController {
 
   getLiveCount = async (req, res) => {
     try {
-      const adminDoc = await AdminModel.findOne(); // use filter if needed
+      const adminDoc = await AdminModel.findOne({}, 'liveCount'); // Fetch only liveCount
 
       if (!adminDoc) {
         return res.status(404).json({ message: "Admin data not found" });
