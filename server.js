@@ -142,16 +142,56 @@ app.use("/api", router);
 
 const wss = new WebSocketServer({ server });
 
+function heartbeat() {
+  this.isAlive = true;
+}
+
+// 🔹 Interval that checks all clients every 30s
+const interval = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (!ws.isAlive) {
+      console.log("Terminating dead connection");
+      return ws.terminate();
+    }
+
+    ws.isAlive = false;
+    ws.ping(); // send ping (client should reply with pong automatically)
+  });
+}, 30000);
+
 wss.on("connection", (ws) => {
   console.log("Client Connected");
-  //   ws.send(JSON.stringify({ name: "YRV", comment: "Hello world" }));
 
-  ws.on("message", (message) => {
-    // ws.send(`Server got: ${message}`);
+  // mark as alive when connected
+  ws.isAlive = true;
+
+  // when a pong is received, mark alive again
+  ws.on("pong", heartbeat);
+
+  // ws.on("message", (message) => {
+  //   // Handle messages here if needed
+  // });
+
+  ws.on("close", () => {
+    console.log("Client disconnected");
   });
-
-  ws.on("close", () => console.log("Client disconnected"));
 });
+
+// cleanup interval on server shutdown
+wss.on("close", () => {
+  clearInterval(interval);
+});
+
+// wss.on("connection", (ws) => {
+//   console.log("Client Connected");
+//   //   ws.send(JSON.stringify({ name: "YRV", comment: "Hello world" }));
+
+//   ws.on("message", (message) => {
+//     // ws.send(`Server got: ${message}`);
+//   });
+
+//   ws.on("close", () => console.log("Client disconnected"));
+// });
 
 // Broadcast helper
 export function broadcast(data) {

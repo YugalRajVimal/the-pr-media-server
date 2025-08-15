@@ -46,6 +46,10 @@ adminRouter.delete("/delete-all-name-comments", jwtAdminAuth, (req, res) => {
   adminController.deleteAllNameComments(req, res);
 });
 
+adminRouter.post("/delete-duplicate-comments", jwtAdminAuth, (req, res) => {
+  adminController.deleteDuplicateComments(req, res);
+});
+
 // route
 adminRouter.post(
   "/upload-images",
@@ -64,7 +68,6 @@ adminRouter.delete("/delete-all-images", jwtAdminAuth, (req, res) => {
   adminController.deleteAllImages(req, res);
 });
 
-
 adminRouter.get("/get-all-users", jwtAdminAuth, (req, res) => {
   adminController.getAllUserList(req, res);
 });
@@ -72,6 +75,5 @@ adminRouter.get("/get-all-users", jwtAdminAuth, (req, res) => {
 adminRouter.put("/approve-user/:id", jwtAdminAuth, (req, res) => {
   adminController.approveUser(req, res);
 });
-
 
 export default adminRouter;
