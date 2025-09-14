@@ -117,7 +117,9 @@ app.get(
       });
 
       // Redirect to frontend route (e.g., dashboard)
-      res.redirect(`${process.env.FRONTEND_URL}/oauth-success?token=${token}`);
+      res.redirect(
+        `${process.env.FRONTEND_URL}/oauth-success?token=${token}&name=${user.name}`
+      );
 
       // res.redirect(`${process.env.FRONTEND_URL}/`); // change if needed
     } catch (err) {
