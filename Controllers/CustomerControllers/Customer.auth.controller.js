@@ -11,6 +11,23 @@ class CustomerAuthController {
   }
 
   checkAuth = async (req, res) => {
+    console.log("Auth called");
+
+    if (!req.user || !req.user.id) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: User information missing." });
+    }
+
+    const userId = req.user.id;
+    const user = await CustomerModel.findById(userId);
+
+    if (!user) {
+      console.log("User does not exist");
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: User not found in database." });
+    }
     return res.status(200).json({ message: "Authorized" });
   };
 
@@ -516,7 +533,7 @@ class CustomerAuthController {
 
   getLiveCount = async (req, res) => {
     try {
-      const adminDoc = await AdminModel.findOne({}, 'liveCount'); // Fetch only liveCount
+      const adminDoc = await AdminModel.findOne({}, "liveCount"); // Fetch only liveCount
 
       if (!adminDoc) {
         return res.status(404).json({ message: "Admin data not found" });
