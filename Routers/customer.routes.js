@@ -29,6 +29,11 @@ customerRouter.get(
   customerAuthController.isUserApproved
 );
 
+customerRouter.get(
+  "/get-uploaded-videos",
+  customerAuthController.getUploadedVideos
+);
+
 customerRouter.get("/live-count", customerAuthController.getLiveCount);
 
 export default customerRouter;

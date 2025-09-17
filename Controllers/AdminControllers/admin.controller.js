@@ -175,13 +175,68 @@ class AdminController {
   getUploadedImages = async (req, res) => {
     try {
       const adminId = req.user.id;
-      const admin = await AdminModel.findById(adminId);
+      const admin = await AdminModel.findById(adminId).select("imagesPath");
       if (!admin) {
         return res.status(404).json({ message: "Admin not found" });
       }
       return res.status(200).json({ images: admin.imagesPath });
     } catch (error) {
       console.error("Error fetching uploaded images:", error);
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  };
+
+  uploadVideo = async (req, res) => {
+    try {
+      const adminId = req.user.id;
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir);
+      }
+
+      const timestamp = Date.now();
+      const filename = `${timestamp}-${req.file.originalname}`;
+      const outputPath = path.join(uploadDir, filename);
+
+      fs.writeFileSync(outputPath, req.file.buffer);
+
+      const admin = await AdminModel.findById(adminId);
+      if (!admin) return res.status(404).json({ message: "Admin not found" });
+
+      admin.videosPath.push({
+        path: `uploads/${filename}`, // relative path
+        text: req.body.text || "",
+      });
+
+      await admin.save();
+
+      res.status(200).json({
+        message: "Video uploaded successfully",
+        video: { path: `uploads/${filename}`, text: req.body.text || "" },
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ message: "Video upload failed", error: error.message });
+    }
+  };
+
+  getUploadedVideos = async (req, res) => {
+    try {
+      const adminId = req.user.id;
+
+      const admin = await AdminModel.findById(adminId).select("videosPath");
+
+      if (!admin) {
+        return res.status(404).json({ message: "Admin not found" });
+      }
+      // Assuming AdminModel has a 'videosPath' array field
+      return res.status(200).json({ videos: admin.videosPath });
+    } catch (error) {
+      console.error("Error fetching uploaded videos:", error);
       return res.status(500).json({ message: "Internal Server Error" });
     }
   };

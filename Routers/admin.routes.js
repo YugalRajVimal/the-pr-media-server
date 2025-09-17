@@ -4,6 +4,7 @@ import AdminAuthController from "../Controllers/AdminControllers/admin.auth.cont
 import AdminController from "../Controllers/AdminControllers/admin.controller.js";
 import jwtAdminAuth from "../middlewares/Auth/admin.auth.middleware.js";
 import { upload } from "../middlewares/fileUpload.middleware.js";
+import { uploadVideo } from "../middlewares/videoUpload.middleware.js";
 
 const adminRouter = express.Router();
 
@@ -51,10 +52,28 @@ adminRouter.post("/delete-duplicate-comments", jwtAdminAuth, (req, res) => {
 });
 
 // route
+// adminRouter.post(
+//   "/upload-images",
+//   jwtAdminAuth,
+//   upload.array("images", 10),
+//   (req, res) => {
+//     adminController.uploadImages(req, res);
+//   }
+// );
+
+// routes/adminRouter.js
 adminRouter.post(
   "/upload-images",
   jwtAdminAuth,
-  upload.array("images", 10),
+  (req, res, next) => {
+    upload.array("images", 10)(req, res, function (err) {
+      if (err) {
+        console.error("Upload error:", err.message);
+        return res.status(400).json({ success: false, error: err.message });
+      }
+      next();
+    });
+  },
   (req, res) => {
     adminController.uploadImages(req, res);
   }
@@ -63,6 +82,19 @@ adminRouter.post(
 adminRouter.get("/get-uploaded-images", jwtAdminAuth, (req, res) => {
   adminController.getUploadedImages(req, res);
 });
+
+adminRouter.get("/get-uploaded-videos", jwtAdminAuth, (req, res) => {
+  adminController.getUploadedVideos(req, res);
+});
+
+adminRouter.post(
+  "/upload-video",
+  jwtAdminAuth,
+  uploadVideo.single("video"), // ✅ single
+  (req, res) => {
+    adminController.uploadVideo(req, res);
+  }
+);
 
 adminRouter.delete("/delete-all-images", jwtAdminAuth, (req, res) => {
   adminController.deleteAllImages(req, res);

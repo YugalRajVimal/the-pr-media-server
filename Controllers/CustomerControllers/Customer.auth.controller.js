@@ -28,7 +28,7 @@ class CustomerAuthController {
         .status(401)
         .json({ message: "Unauthorized: User not found in database." });
     }
-    return res.status(200).json({ message: "Authorized" });
+    return res.status(200).json({ message: "Authorized", userId: req.user.id });
   };
 
   signup = async (req, res) => {
@@ -225,6 +225,21 @@ class CustomerAuthController {
     }
   };
 
+  getUploadedVideos = async (req, res) => {
+    try {
+      const admin = await AdminModel.findOne().select("videosPath");
+
+      if (!admin) {
+        return res.status(404).json({ message: "Admin not found" });
+      }
+      // Assuming AdminModel has a 'videosPath' array field
+      return res.status(200).json({ videos: admin.videosPath });
+    } catch (error) {
+      console.error("Error fetching uploaded videos:", error);
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  };
+
   // sendSingleNameComment = async () => {
   //   try {
   //     console.log("Starting to send a single name comment");
@@ -304,15 +319,12 @@ class CustomerAuthController {
 
   // --- scheduler: owns timing AND the index updates ---
   startRandomBroadcast = () => {
-    console.log("Starting random broadcast");
     let broadcastState = {
       comments: [],
       index: 0,
     };
 
-    console.log("Defining getDelayByTime function");
     const getDelayByTime = () => {
-      console.log("Calculating delay based on time");
       const hour = Number(
         new Intl.DateTimeFormat("en-GB", {
           timeZone: "Asia/Kolkata",
@@ -321,7 +333,6 @@ class CustomerAuthController {
         }).format(Date.now())
       );
 
-      console.log("Checking hour range for delay");
       if (hour >= 1 && hour < 8)
         return Math.floor(Math.random() * 30000) + 90000; // 90–120s
       if (hour >= 8 && hour < 10)
@@ -331,28 +342,21 @@ class CustomerAuthController {
       return Math.floor(Math.random() * 5000) + 15000; // 15–20s
     };
 
-    console.log("Defining loadCommentsIntoMemory function");
     const loadCommentsIntoMemory = async () => {
-      console.log("Loading comments into memory");
       const admin = await AdminModel.findOne(
         {},
         "nameComments currentNameCommentIndex"
       ).lean();
-      console.log("Checking if admin or comments exist");
       if (!admin || admin.nameComments.length === 0) {
-        console.log("No comments found");
         return;
       }
 
-      console.log("Shuffling comments array");
       // Shuffle once at load
       broadcastState.comments = shuffleArray([...admin.nameComments]);
       broadcastState.index = admin.currentNameCommentIndex || 0;
     };
 
-    console.log("Defining shuffleArray function");
     function shuffleArray(array) {
-      console.log("Shuffling array");
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
@@ -360,35 +364,24 @@ class CustomerAuthController {
       return array;
     }
 
-    console.log("Defining tick function");
     const tick = async () => {
-      console.log("Ticking");
       try {
-        console.log("Checking if comments array is empty");
         if (broadcastState.comments.length === 0) {
-          console.log("Comments array is empty, loading comments into memory");
           await loadCommentsIntoMemory();
         }
 
-        console.log("Checking if index exceeds comments length");
         if (broadcastState.index >= broadcastState.comments.length) {
-          console.log("Index exceeds comments length, reshuffling comments");
           broadcastState.comments = shuffleArray([...broadcastState.comments]);
           broadcastState.index = 0;
         }
 
-        console.log("Getting current comment");
         const comment = broadcastState.comments[broadcastState.index];
-        console.log("Broadcasting comment");
         broadcast(comment);
 
-        console.log("Incrementing index");
         broadcastState.index++;
 
-        console.log("Checking if index is a multiple of 50");
         // Save index to DB occasionally (reduces writes)
         if (broadcastState.index % 50 === 0) {
-          console.log("Saving index to DB due to 50 comment milestone");
           await AdminModel.updateOne(
             {},
             { currentNameCommentIndex: broadcastState.index }
@@ -398,11 +391,9 @@ class CustomerAuthController {
         console.error("Tick error:", err);
       }
 
-      console.log("Scheduling next tick");
       setTimeout(tick, getDelayByTime());
     };
 
-    console.log("Starting tick loop");
     // Start the loop
     tick();
   };

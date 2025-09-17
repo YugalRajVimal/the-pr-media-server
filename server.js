@@ -13,6 +13,8 @@ import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import CustomerAuthController from "./Controllers/CustomerControllers/Customer.auth.controller.js";
 import AdminModel from "./Schema/admin.schema.js";
+
+import { initWebSocket } from "./WebSocketServer/webSocket.js";
 // import "./WebSocketServer/wsServer.js";
 // wsServer.js
 import { WebSocketServer } from "ws";
@@ -144,6 +146,7 @@ app.use("/api", router);
 
 const wss = new WebSocketServer({ server });
 
+
 function heartbeat() {
   this.isAlive = true;
 }
@@ -211,3 +214,6 @@ server.listen(port, () => {
   connectUsingMongoose();
   customerControllers.startRandomBroadcast();
 });
+
+
+initWebSocket(wss, app);

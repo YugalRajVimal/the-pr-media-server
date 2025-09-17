@@ -41,6 +41,14 @@ const adminSchema = new mongoose.Schema({
       type: String,
     },
   ],
+
+  videosPath: [
+    {
+      path: { type: String },
+      text: { type: String },
+    },
+  ],
+
   currentNameCommentIndex: {
     type: Number,
     default: 0,
