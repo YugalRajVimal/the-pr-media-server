@@ -35,6 +35,7 @@ import mongoose from "mongoose";
 
 const messageSchema = new mongoose.Schema(
   {
+    name: { type: String, required: true },
     sender: { type: String, enum: ["admin", "customer"], required: true },
     text: { type: String, required: true },
     timestamp: { type: Date, default: Date.now },

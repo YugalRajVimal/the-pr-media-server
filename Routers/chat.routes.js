@@ -7,6 +7,21 @@ const chatRouter = express.Router();
 // Get all chats (admin view)
 chatRouter.get("/", async (req, res) => {
   try {
+    // Calculate the cutoff time (48 hours ago)
+    const cutoffTime = new Date(Date.now() - 48 * 60 * 60 * 1000); // 48 hours in milliseconds
+
+    // Delete chats from db older than 48 hours for all customers
+    await CustomerModel.updateMany(
+      {}, // Apply to all customers
+      {
+        $pull: {
+          privateChats: {
+            timestamp: { $lt: cutoffTime }, // Remove messages older than cutoffTime
+          },
+        },
+      }
+    );
+
     const customers = await CustomerModel.find().select(
       "name email privateChats"
     );
@@ -47,8 +62,8 @@ chatRouter.get("/:customerId", async (req, res) => {
 
 // Send a message
 chatRouter.post("/:customerId/messages", async (req, res) => {
-  const { sender, text } = req.body;
-  const message = { sender, text, timestamp: new Date() };
+  const { sender, text, name } = req.body;
+  const message = { sender, text, timestamp: new Date(), name };
 
   const customer = await CustomerModel.findByIdAndUpdate(
     req.params.customerId,
