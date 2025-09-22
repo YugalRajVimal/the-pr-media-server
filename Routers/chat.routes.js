@@ -50,10 +50,30 @@ chatRouter.get("/", async (req, res) => {
 // Get one customer chat history
 chatRouter.get("/:customerId", async (req, res) => {
   try {
-    const customer = await CustomerModel.findById(req.params.customerId).select(
+    const customerId = req.params.customerId;
+
+    // Mark all unread customer messages in this chat as read
+    await CustomerModel.updateOne(
+      { _id: customerId },
+      { $set: { "privateChats.$[elem].read": true } },
+      {
+        arrayFilters: [{ "elem.read": false, "elem.sender": "customer" }],
+      }
+    );
+
+    // Fetch the updated customer chat history
+    const customer = await CustomerModel.findById(customerId).select(
       "name privateChats"
     );
+
     if (!customer) return res.status(404).json({ error: "Customer not found" });
+
+    // Note: A WebSocket notification to the admin to clear unread badges
+    // could be added here if the `onlineUsers` map or a dedicated `sendToAdmin`
+    // function were exposed by the WebSocket server. For now, this route
+    // focuses on updating the database state, consistent with the existing
+    // PATCH /:customerId/read route.
+
     res.json(customer);
   } catch (err) {
     res.status(500).json({ error: err.message });

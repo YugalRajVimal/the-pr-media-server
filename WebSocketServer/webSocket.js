@@ -42,6 +42,34 @@ export function initWebSocket(wss, app) {
           wss.broadcastMessage(customerId, message);
         }
 
+        if (data.type === "mark_read") {
+          console.log("hit");
+          try {
+            await CustomerModel.updateOne(
+              { _id: data.customerId },
+              { $set: { "privateChats.$[elem].read": true } },
+              {
+                arrayFilters: [
+                  { "elem.read": false, "elem.sender": "customer" },
+                ],
+              } // ✅ fix: mark *customer* messages read
+            );
+
+            // notify admin to clear badge
+            const adminSocket = onlineUsers.get("admin");
+            if (adminSocket) {
+              adminSocket.send(
+                JSON.stringify({
+                  type: "messages_read",
+                  customerId: data.customerId,
+                })
+              );
+            }
+          } catch (err) {
+            console.error("Failed to mark messages read:", err);
+          }
+        }
+
         if (data.type === "register") {
           const key = data.role === "admin" ? "admin" : data.id;
           onlineUsers.set(key, ws);
