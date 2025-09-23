@@ -240,6 +240,36 @@ class CustomerAuthController {
     }
   };
 
+  saveOneSignalId = async (req, res) => {
+    try {
+      const { oneSignalId } = req.body;
+      const customerId = req.user.id; // Assuming req.user.id is set by jwtAuth middleware
+
+      if (!oneSignalId) {
+        return res.status(400).json({ message: "OneSignal ID is required" });
+      }
+
+      const customer = await CustomerModel.findByIdAndUpdate(
+        customerId,
+        { oneSignalId: oneSignalId },
+        { new: true } // Return the updated document
+      );
+
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+
+      return res
+        .status(200)
+        .json({
+          message: "OneSignal ID saved successfully",
+          customerId: customer._id,
+        });
+    } catch (error) {
+      console.error("Error saving OneSignal ID:", error);
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  };
   // sendSingleNameComment = async () => {
   //   try {
   //     console.log("Starting to send a single name comment");

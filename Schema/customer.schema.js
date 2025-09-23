@@ -49,7 +49,7 @@ const customerSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   verified: { type: Boolean, default: false },
   approved: { type: Boolean, default: false },
-
+  oneSignalId: { type: String },
   privateChats: [messageSchema],
 });
 

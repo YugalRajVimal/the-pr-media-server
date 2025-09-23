@@ -38,7 +38,7 @@ app.use(
 app.use(
   cors({
     origin: [
-      "http://localhost:3001",
+      "http://localhost:3000",
       "https://theprmedia.com",
       "https://www.theprmedia.com",
     ],
@@ -120,7 +120,7 @@ app.get(
 
       // Redirect to frontend route (e.g., dashboard)
       res.redirect(
-        `${process.env.FRONTEND_URL}/oauth-success?token=${token}&name=${user.name}`
+        `${process.env.FRONTEND_URL}/oauth-success?token=${token}&name=${user.name}&email=${user.email}`
       );
 
       // res.redirect(`${process.env.FRONTEND_URL}/`); // change if needed
@@ -145,7 +145,6 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api", router);
 
 const wss = new WebSocketServer({ server });
-
 
 function heartbeat() {
   this.isAlive = true;
@@ -214,6 +213,5 @@ server.listen(port, () => {
   connectUsingMongoose();
   customerControllers.startRandomBroadcast();
 });
-
 
 initWebSocket(wss, app);

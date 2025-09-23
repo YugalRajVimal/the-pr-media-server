@@ -34,6 +34,12 @@ customerRouter.get(
   customerAuthController.getUploadedVideos
 );
 
+customerRouter.post(
+  "/save-onesignal-id",
+  jwtAuth,
+  customerAuthController.saveOneSignalId
+);
+
 customerRouter.get("/live-count", customerAuthController.getLiveCount);
 
 export default customerRouter;

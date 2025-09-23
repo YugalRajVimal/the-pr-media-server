@@ -23,7 +23,7 @@ chatRouter.get("/", async (req, res) => {
     );
 
     const customers = await CustomerModel.find().select(
-      "name email privateChats"
+      "name email oneSignalId privateChats"
     );
     const chats = customers.map((c) => {
       const lastMessage = c.privateChats[c.privateChats.length - 1] || null;
@@ -35,6 +35,7 @@ chatRouter.get("/", async (req, res) => {
         customerId: c._id.toString(),
         name: c.name,
         email: c.email,
+        oneSignalId: c.oneSignalId ? c.oneSignalId : null,
         lastMessage: lastMessage ? lastMessage.text : null, // ✅ only text
         time: lastMessage ? lastMessage.timestamp : null, // ✅ timestamp
         unread, // ✅ match frontend
