@@ -39,8 +39,8 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "https://theprmedia.com",
-      "https://www.theprmedia.com",
+      "https://theprmediaa.com",
+      "https://www.theprmediaa.com",
     ],
     methods: "GET,POST,PUT,DELETE,OPTIONS",
     allowedHeaders: "Content-Type, Authorization",
