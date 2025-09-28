@@ -100,6 +100,10 @@ adminRouter.delete("/delete-all-images", jwtAdminAuth, (req, res) => {
   adminController.deleteAllImages(req, res);
 });
 
+adminRouter.delete("/delete-all-videos", jwtAdminAuth, (req, res) => {
+  adminController.deleteAllVideos(req, res);
+});
+
 adminRouter.get("/get-all-users", jwtAdminAuth, (req, res) => {
   adminController.getAllUserList(req, res);
 });

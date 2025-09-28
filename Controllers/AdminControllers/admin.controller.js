@@ -271,6 +271,36 @@ class AdminController {
     }
   };
 
+  deleteAllVideos = async (req, res) => {
+    try {
+      const adminId = req.user.id;
+
+      const admin = await AdminModel.findById(adminId);
+      if (!admin) {
+        return res.status(404).json({ message: "Admin not found" });
+      }
+
+      // Convert image paths to file objects with `path` field for deletion
+      const filesToDelete = admin.videosPath.map((filePath) => ({
+        path: `./${filePath}`,
+      }));
+
+      // Clear image paths from DB
+      admin.videosPath = [];
+      await admin.save();
+
+      // Delete files from filesystem
+      deleteCompressedFiles(filesToDelete);
+
+      return res.status(200).json({
+        message: "All videos deleted successfully and uploads folder emptied",
+      });
+    } catch (error) {
+      console.error("Error deleting videos or emptying uploads folder:", error);
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  };
+
   getAllUserList = async (req, res) => {
     try {
       const users = await CustomerModel.find();
