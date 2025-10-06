@@ -348,44 +348,109 @@ class CustomerAuthController {
   // Function to calculate delay based on time
 
   // --- scheduler: owns timing AND the index updates ---
+  // startRandomBroadcast = () => {
+  //   let broadcastState = {
+  //     comments: [],
+  //     index: 0,
+  //   };
+
+  //   const getDelayByTime = () => {
+  //     const hour = Number(
+  //       new Intl.DateTimeFormat("en-GB", {
+  //         timeZone: "Asia/Kolkata",
+  //         hour: "2-digit",
+  //         hour12: false,
+  //       }).format(Date.now())
+  //     );
+
+  //     if (hour >= 1 && hour < 8)
+  //       return Math.floor(Math.random() * 30000) + 90000; // 90–120s
+  //     if (hour >= 8 && hour < 10)
+  //       return Math.floor(Math.random() * 2000) + 8000; // 8–10s
+  //     if (hour >= 10 && hour < 21)
+  //       return Math.floor(Math.random() * 2000) + 2000; // 2–4s
+  //     return Math.floor(Math.random() * 5000) + 15000; // 15–20s
+  //   };
+
+  //   const loadCommentsIntoMemory = async () => {
+  //     const admin = await AdminModel.findOne(
+  //       {},
+  //       "nameComments currentNameCommentIndex"
+  //     ).lean();
+  //     if (!admin || admin.nameComments.length === 0) {
+  //       return;
+  //     }
+
+  //     // Shuffle once at load
+  //     broadcastState.comments = shuffleArray([...admin.nameComments]);
+  //     broadcastState.index = admin.currentNameCommentIndex || 0;
+  //   };
+
+  //   function shuffleArray(array) {
+  //     for (let i = array.length - 1; i > 0; i--) {
+  //       const j = Math.floor(Math.random() * (i + 1));
+  //       [array[i], array[j]] = [array[j], array[i]];
+  //     }
+  //     return array;
+  //   }
+
+  //   const tick = async () => {
+  //     try {
+  //       if (broadcastState.comments.length === 0) {
+  //         await loadCommentsIntoMemory();
+  //       }
+
+  //       if (broadcastState.index >= broadcastState.comments.length) {
+  //         broadcastState.comments = shuffleArray([...broadcastState.comments]);
+  //         broadcastState.index = 0;
+  //       }
+
+  //       const comment = broadcastState.comments[broadcastState.index];
+  //       broadcast(comment);
+
+  //       broadcastState.index++;
+
+  //       // Save index to DB occasionally (reduces writes)
+  //       if (broadcastState.index % 50 === 0) {
+  //         await AdminModel.updateOne(
+  //           {},
+  //           { currentNameCommentIndex: broadcastState.index }
+  //         );
+  //       }
+  //     } catch (err) {
+  //       console.error("Tick error:", err);
+  //     }
+
+  //     setTimeout(tick, getDelayByTime());
+  //   };
+
+  //   // Start the loop
+  //   tick();
+  // };
+
   startRandomBroadcast = () => {
     let broadcastState = {
       comments: [],
       index: 0,
     };
-
-    const getDelayByTime = () => {
-      const hour = Number(
-        new Intl.DateTimeFormat("en-GB", {
-          timeZone: "Asia/Kolkata",
-          hour: "2-digit",
-          hour12: false,
-        }).format(Date.now())
-      );
-
-      if (hour >= 1 && hour < 8)
-        return Math.floor(Math.random() * 30000) + 90000; // 90–120s
-      if (hour >= 8 && hour < 10)
-        return Math.floor(Math.random() * 2000) + 8000; // 8–10s
-      if (hour >= 10 && hour < 21)
-        return Math.floor(Math.random() * 2000) + 2000; // 2–4s
-      return Math.floor(Math.random() * 5000) + 15000; // 15–20s
-    };
-
+  
+    const BROADCAST_INTERVAL = 4000; // fixed 4 seconds
+  
     const loadCommentsIntoMemory = async () => {
       const admin = await AdminModel.findOne(
         {},
         "nameComments currentNameCommentIndex"
       ).lean();
-      if (!admin || admin.nameComments.length === 0) {
+      if (!admin || !admin.nameComments || admin.nameComments.length === 0) {
+        console.warn("No comments found in AdminModel");
         return;
       }
-
-      // Shuffle once at load
+  
+      // Shuffle once when loaded
       broadcastState.comments = shuffleArray([...admin.nameComments]);
       broadcastState.index = admin.currentNameCommentIndex || 0;
     };
-
+  
     function shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -393,24 +458,25 @@ class CustomerAuthController {
       }
       return array;
     }
-
+  
     const tick = async () => {
       try {
         if (broadcastState.comments.length === 0) {
           await loadCommentsIntoMemory();
         }
-
+  
         if (broadcastState.index >= broadcastState.comments.length) {
+          // Restart once finished all comments
           broadcastState.comments = shuffleArray([...broadcastState.comments]);
           broadcastState.index = 0;
         }
-
+  
         const comment = broadcastState.comments[broadcastState.index];
-        broadcast(comment);
-
+        broadcast(comment); // ✅ send to clients
+  
         broadcastState.index++;
-
-        // Save index to DB occasionally (reduces writes)
+  
+        // Save index occasionally (not every tick)
         if (broadcastState.index % 50 === 0) {
           await AdminModel.updateOne(
             {},
@@ -420,13 +486,15 @@ class CustomerAuthController {
       } catch (err) {
         console.error("Tick error:", err);
       }
-
-      setTimeout(tick, getDelayByTime());
+  
+      // 🔁 Run again in exactly 4 seconds
+      setTimeout(tick, BROADCAST_INTERVAL);
     };
-
-    // Start the loop
+  
+    // ✅ Start the broadcast loop
     tick();
   };
+  
 
   // optional stopper
   stopRandomBroadcast = () => {
