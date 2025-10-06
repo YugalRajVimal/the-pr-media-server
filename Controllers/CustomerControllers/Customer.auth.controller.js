@@ -434,7 +434,7 @@ class CustomerAuthController {
       index: 0,
     };
   
-    const BROADCAST_INTERVAL = 4000; // fixed 4 seconds
+    const BROADCAST_INTERVAL = 5000; // fixed 4 seconds
   
     const loadCommentsIntoMemory = async () => {
       const admin = await AdminModel.findOne(
